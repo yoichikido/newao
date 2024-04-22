@@ -380,6 +380,89 @@ class FirebaseService {
         .authStateChanges(); //returns a Stream that is updated whenever the user's authentication state changes
   }
 
+// ---=== text chat methods from here===---
+  Stream<List<Map<String, dynamic>>> listTextChatRooms() {
+    return _firestore.collection('textChatRooms').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return {
+          'textChatRoomId': doc.id,
+          'roomName': doc['roomName'],
+          'participantCount': doc['participants'].length,
+          'activeParticipants': doc['participants'].where((p) => p['active']).length,
+        };
+      }).toList();
+    });
+  }
+
+  Future<void> joinTextChatRoom(String textChatRoomId, String userId) async {
+    DocumentReference roomRef = _firestore.collection('textChatRooms').doc(textChatRoomId);
+    await roomRef.collection('participants').doc(userId).set({
+      'id': userId,
+      'approvedStatus': false,
+      'active': true,
+      'requestingEntry': true,
+      'rightToApprove': false,
+    });
+    sendMessage(textChatRoomId, "$userId wants to join", userId);
+  }
+
+  Future<void> leaveTextChatRoom(String textChatRoomId, String userId) async {
+    DocumentReference participantRef = _firestore.collection('textChatRooms').doc(textChatRoomId).collection('participants').doc(userId);
+    await participantRef.delete();
+  }
+
+
+  Future<void> sendMessage(String textChatRoomId, String content, String senderId, {String? repliedToId}) async {
+    await _firestore.collection('textChatRooms').doc(textChatRoomId).collection('messages').add({
+      'content': content,
+      'timestamp': FieldValue.serverTimestamp(),
+      'senderId': senderId,
+      'repliedToId': repliedToId ?? '',
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> listenForMessages(String textChatRoomId) {
+    return _firestore.collection('textChatRooms').doc(textChatRoomId).collection('messages').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+    });
+  }
+
+  Future<void> pauseMessages(String textChatRoomId, String userId) async {
+    sendMessage(textChatRoomId, "$userId has paused messages", userId);
+  }
+
+  Future<void> unpauseMessages(String textChatRoomId, String userId) async {
+    sendMessage(textChatRoomId, "$userId has unpaused messages", userId);
+  }
+
+  Future<void> approveParticipant(String textChatRoomId, String participantId, bool approve, bool rightToApprove) async {
+    DocumentReference participantRef = _firestore.collection('textChatRooms').doc(textChatRoomId).collection('participants').doc(participantId);
+    if (approve) {
+      await participantRef.update({
+        'approvedStatus': true,
+        'rightToApprove': rightToApprove,
+      });
+    } else {
+      await participantRef.delete();
+    }
+  }
+
+  Future<void> createTextChatRoom(String roomName, String userId) async {
+    DocumentReference newRoomRef = await _firestore.collection('textChatRooms').add({
+      'roomName': roomName,
+      'creatorId': userId,
+    });
+    await joinTextChatRoom(newRoomRef.id, userId);
+    sendMessage(newRoomRef.id, "$userId has created the room '$roomName' and has left this room", userId);
+  }
+
+  Future<List<Map<String, dynamic>>> pullOlderMessages(String textChatRoomId) async {
+    QuerySnapshot snapshot = await _firestore.collection('textChatRooms').doc(textChatRoomId).collection('messages')
+      .orderBy('timestamp', descending: true).limit(5).get();
+    return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+  }
+
+// ---=== text chat methods to here ===---
 // For membership data
 Future<bool> saveMemberData(String name, String email, String userId) async {
   try {
