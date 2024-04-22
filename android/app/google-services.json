@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "669034824282",
+    "project_id": "aonv2mr",
+    "storage_bucket": "aonv2mr.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669034824282:android:bba58ab62a4da5b4820e63",
+        "android_client_info": {
+          "package_name": "tv.kidfam.authonly"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669034824282-7rbarhouuomeluff87q1ephhel9f1agr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAr9U8HtmoAO1yW560guVOWT0kGuhgfGWw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "669034824282-7rbarhouuomeluff87q1ephhel9f1agr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "669034824282-at2h2b7kqgr3hfjsciijunaggbkqbe11.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.authonly"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
