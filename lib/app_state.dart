@@ -8,12 +8,17 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 class AppState with ChangeNotifier {
   // Firebase Auth instance for user authentication state
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;//adding for Messaging page
   User? _user;
   // List<RemoteMessage> _notifications = [];
   List<Map<String, dynamic>> _notifications = [];  // Change to store simple maps
 
   // Text editing contents
   String _currentText = '';
+  // Chat data
+  List<Map<String, dynamic>> _textChatRooms = [];
+  List<Map<String, dynamic>> _messages = [];
+  bool _isPaused = false;
 
   // AppState constructor
   AppState() {
@@ -24,6 +29,10 @@ class AppState with ChangeNotifier {
 
   // List<RemoteMessage> get notifications => _notifications;
   List<Map<String, dynamic>> get notifications => _notifications;
+  //next 2 for Chat
+  List<Map<String, dynamic>> get textChatRooms => _textChatRooms;
+  List<Map<String, dynamic>> get messages => _messages;
+  bool get isPaused => _isPaused;
 
   // User authentication state ***!!!defining 2x is this necessary
   User? get user => _user;
@@ -33,7 +42,24 @@ class AppState with ChangeNotifier {
 
   // Text editing content
   String get currentText => _currentText;
-
+  //for Chat
+  Stream<List<Map<String, dynamic>>> listenForMessages(String textChatRoomId) {
+    return _firestore.collection('textChatRooms')
+        .doc(textChatRoomId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
+  }
+  // void listenForMessages(String textChatRoomId) {
+  //   _firestore.collection('textChatRooms').doc(textChatRoomId).collection('messages').orderBy('timestamp', descending: true).snapshots().listen((snapshot) {
+  //     _messages = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+  //     if (!_isPaused) {
+  //       notifyListeners();
+  //     }
+  //   });
+  // }
+  
   // Listen to Firebase Auth state changes
   void _listenToAuthState() {
     _auth.authStateChanges().listen((User? user) {
@@ -143,6 +169,53 @@ class AppState with ChangeNotifier {
   Future<void> signOut() async {
     await _auth.signOut();
     // signOut automatically triggers _listenToAuthState
+  }
+  //next 6 methods for chat
+  void fetchTextChatRooms() {
+    _firestore.collection('textChatRooms').snapshots().listen((snapshot) {
+      _textChatRooms = snapshot.docs.map((doc) => {
+        'textChatRoomId': doc.id,
+        'roomName': doc.data()['roomName'],
+        'participantCount': doc.data()['participants'].length,  // Ensure this field exists and is calculated correctly
+        'activeParticipants': doc.data()['participants'].where((p) => p['active']).length  // Same here
+      }).toList();
+      notifyListeners();
+    });
+  }
+
+  void fetchMessages(String textChatRoomId) {
+    _firestore.collection('textChatRooms').doc(textChatRoomId).collection('messages').orderBy('timestamp', descending: true).snapshots().listen((snapshot) {
+      _messages = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      notifyListeners();
+    });
+  }
+
+  // void fetchTextChatRooms() {
+  //   _firestore.collection('textChatRooms').snapshots().listen((snapshot) {
+  //     _textChatRooms = snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+  //     notifyListeners();
+  //   });
+  // }
+
+
+  void sendMessage(String textChatRoomId, String content, String userId) {
+    var message = {
+      'content': content,
+      'timestamp': FieldValue.serverTimestamp(),
+      'senderId': userId,
+    };
+    _firestore.collection('textChatRooms').doc(textChatRoomId).collection('messages').add(message);
+  }
+
+  void pauseMessages(String textChatRoomId, String userId) {
+    _isPaused = true;
+    sendMessage(textChatRoomId, "$userId has paused messages", userId);
+  }
+
+  void unpauseMessages(String textChatRoomId, String userId) {
+    _isPaused = false;
+    sendMessage(textChatRoomId, "$userId has unpaused messages", userId);
+    notifyListeners(); // Resume updating UI with new messages
   }
 
   // Optionally, integrate Firestore for tracking resources or other app-wide states

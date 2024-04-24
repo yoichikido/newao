@@ -33,6 +33,17 @@ class MyApp extends StatelessWidget {
         StreamProvider<User?>.value(
           value: FirebaseService().authStateChanges(),
           initialData: null,),
+        //2 Providers below for text chat messaging page
+        // ChangeNotifierProvider(create: (context) => AppState()..fetchTextChatRooms()),
+        // StreamProvider(create: (context) => context.read<AppState>().listenForMessages("specificRoomId"), initialData: []),
+        StreamProvider<List<Map<String, dynamic>>>.value(
+          value: FirebaseService().listenForMessages("specificRoomId"),
+          initialData: [],
+          catchError: (context, error) {
+            print("Error fetching messages: $error");
+            return [];
+          }
+        ),
       ],
       child: MaterialApp(
         home: Builder( // Added Builder to use context below
