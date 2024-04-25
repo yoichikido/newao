@@ -34,6 +34,12 @@ class FirebaseService {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ??  FirebaseFirestore.instance,
         _storage = storage ?? FirebaseStorage.instance;
+  
+// ---=== video methods from here===---
+
+
+// ---=== video methods to here===---
+
 //signInWithLastUsedMethod used in MyApp, not in MyStreambuilderApp
   Future<User?> signInWithLastUsedMethod(
       {String? email, String? password}) async {
