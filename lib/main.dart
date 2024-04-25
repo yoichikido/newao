@@ -1,4 +1,4 @@
-//module main.dart
+//module: main.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Ensure this is imported
@@ -30,9 +30,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => AppState()),
         Provider<FirebaseService>(create: (_) => FirebaseService()),
         Provider<StripeService>(create: (_) => StripeService()),
-        StreamProvider<User?>.value(
-          value: FirebaseService().authStateChanges(),
-          initialData: null,),
+        StreamProvider<User?>(
+          create: (_) => FirebaseAuth.instance.authStateChanges(),
+          initialData: null,
+        ),
+        // StreamProvider<User?>.value(
+        //   value: FirebaseService().authStateChanges(),
+        //   initialData: null,),
         //2 Providers below for text chat messaging page
         // ChangeNotifierProvider(create: (context) => AppState()..fetchTextChatRooms()),
         // StreamProvider(create: (context) => context.read<AppState>().listenForMessages("specificRoomId"), initialData: []),

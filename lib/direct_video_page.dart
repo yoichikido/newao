@@ -1,5 +1,5 @@
-import 'dart:js';
-
+//module: direct_video_page.dart
+// import 'dart:js';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -19,7 +19,8 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
   late RTCVideoRenderer _localRenderer;
   late RTCVideoRenderer _remoteRenderer;
   final _firestore = FirebaseFirestore.instance;
-  late User _user;
+  late User _user; //accessed in Build
+  late String userId;
   
   @override
   void initState() {
@@ -51,14 +52,14 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
   //         print('Initialization failed: $error');
   //     }
   // }
-  _user = Provider.of<User>(context);
+
   Future<void> _initializeVideoRenderer() async {
     //print('_DirectVideoPageState:_initializeVideoRender');
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();// just adding remote like local
   }
   String videoRoomId = 'your_videoRoom_id'; // This should be set dynamically based on your app logic
-  String userId = _user.uid //'your_user_id'; // This should be the authenticated user's ID
+
   Future<void> _setupWebRTC() async {
       //print('_DirectVideoPageState:_setupWebRTC');
       //Request permissions for camera and microphone
@@ -86,20 +87,26 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
         // }
       ]
     };
-    Map<String, dynamic> constraints = {
-      'mandatory': {
-        'OfferToReceiveAudio': true,
-        'OfferToReceiveVideo': true,
-      },
-      'optional': [],
-    };
+    //Old way: (streams, now we can ommit constraints)
+    // Map<String, dynamic> constraints = {
+    //   'mandatory': {
+    //     'OfferToReceiveAudio': true,
+    //     'OfferToReceiveVideo': true,
+    //   },
+    //   'optional': [],
+    // };
+
     // Note: order of activities is important and has been corrected
     //       It's better to set up all event handlers before creating the RTCPeerConnection 
     //       and definitely before adding streams or initializing any part of the connection 
     //       that could trigger these events.
     // Initialize the peer connection
-    _peerConnection = await createPeerConnection(configuration, constraints);
+    // _peerConnection = await createPeerConnection(configuration, constraints);
+    _peerConnection = await createPeerConnection(configuration);
+
     // Setup event handlers
+
+
     _peerConnection.onIceCandidate = (RTCIceCandidate candidate) {
       // When an ICE candidate is found, send it to Firestore
       _sendIceCandidate(candidate);
@@ -108,16 +115,33 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
     // Streams are added to the RTCPeerConnection in a couple of scenarios:
     // Locally: When you explicitly add a local stream using _peerConnection.addStream(_localStream); as in your setup. This is typically done right after acquiring the stream via getUserMedia.
     // Remotely: When the remote peer adds a stream to their connection, and it is transmitted over the WebRTC connection as part of the session. This triggers the onAddStream event on your local peer connection.    
-    _peerConnection.onAddStream = (MediaStream stream) {
-      // Set the received stream to the remote renderer
-      setState(() {
-        _remoteRenderer.srcObject = stream;
-      });
-    };
+    
+    // _peerConnection.onAddStream = (MediaStream stream) {
+    //   // Set the received stream to the remote renderer
+    //   setState(() {
+    //     _remoteRenderer.srcObject = stream;
+    //   });
+    // };
+
     try {
       _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
       _localRenderer.srcObject = _localStream;
-      _peerConnection.addStream(_localStream);
+      // _peerConnection.addStream(_localStream);
+
+      // Add each track to the peer connection (in place of addStream)
+      _localStream.getTracks().forEach((track) {
+        _peerConnection.addTrack(track, _localStream);
+      });
+
+      // Handle incoming tracks
+      _peerConnection.onTrack = (RTCTrackEvent event) {
+        if (event.track.kind == 'video') {
+          setState(() {
+            _remoteRenderer.srcObject = event.streams[0];
+          });
+        }
+      };
+
       // Firestore signaling logic would go here
       _listenForOffers();
       _listenForAnswers();
@@ -161,25 +185,13 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
     RTCSessionDescription description =
         RTCSessionDescription(offer['sdp'], offer['type']);
     await _peerConnection.setRemoteDescription(description);
-    RTCSessionDescription? answer;  // Define answer outside the try block
-    try {
-      answer = await _peerConnection.createAnswer({
-        'mandatory': {
-          'OfferToReceiveAudio': true,
-          'OfferToReceiveVideo': true,
-        },
-        'optional': [],
-      });
-      await _peerConnection.setLocalDescription(answer);
-      // Answer has been successfully created and set at this point
-      // More logic to handle the answer, such as sending it to a remote peer
-    } catch (e) {
-      print("Error creating answer: $e");
-      return;  // Ensure we don't proceed if there was an error
-    }
-    // RTCSessionDescription answer = await _peerConnection.createAnswer({...});
-    
-    // await _peerConnection.setLocalDescription(answer);
+
+    // RTCAnswerOptions answerOptions = RTCAnswerOptions(
+    //   offerToReceiveAudio: true,
+    //   offerToReceiveVideo: true
+    // );
+    RTCSessionDescription? answer = await _peerConnection.createAnswer();
+    await _peerConnection.setLocalDescription(answer);
 
     // Send the answer back to the peer
     if (answer != null) {
@@ -262,6 +274,8 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
 
   @override
   Widget build(BuildContext context) {
+    _user = Provider.of<User>(context);  // must be accessed in a lifecycle method like Build
+    userId = _user.uid; //~'your_user_id'; // This should be the authenticated user's ID    return Scaffold(
     return Scaffold(
       appBar: AppBar(
         title: const Text('Direct Video with WebRTC'),
