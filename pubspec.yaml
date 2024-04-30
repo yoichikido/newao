@@ -45,9 +45,8 @@ dependencies:
   cloud_functions: ^4.7.2 
   # Stripe for payments *causing issues with Kotlin versions
   # flutter_stripe: ^10.1.1
-
+  webview_flutter: ^4.7.0
   flutter_webrtc: ^0.10.3
-
   google_sign_in: ^6.2.1
   font_awesome_flutter: ^10.7.0
   provider: ^6.1.2
@@ -61,6 +60,7 @@ dependencies:
   oauth1: ^2.0.0
   sign_in_with_apple: ^6.0.0
   image_picker: ^1.0.8
+
 
 dev_dependencies:
   flutter_test:

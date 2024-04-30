@@ -1,10 +1,12 @@
 //module membership_page.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+//import 'package:cloud_functions/cloud_functions.dart';// for payments
 import 'stripe_service.dart';
 import 'firebase_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';// for User
+import 'paypal_webview.dart'; // Ensure you have this import
+
 class MembershipPage extends StatefulWidget {
   const MembershipPage({super.key});
 
@@ -17,6 +19,7 @@ class _MembershipPageState extends State<MembershipPage> {
   static List<Widget> _widgetOptions = <Widget>[
     MembershipRegistrationPage(),
     MembershipPaymentPage(),
+    PayPalPaymentPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -44,6 +47,10 @@ class _MembershipPageState extends State<MembershipPage> {
             icon: Icon(Icons.payment),
             label: 'Payment',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet),
+            label: 'PayPal',
+          ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -52,33 +59,17 @@ class _MembershipPageState extends State<MembershipPage> {
   }
 }
 
-// class MembershipPage extends StatelessWidget {
-//   const MembershipPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Membership'),
-//         actions: <Widget>[
-//           IconButton(
-//             icon: const Icon(Icons.settings),
-//             onPressed: () {
-//               // Action for settings
-//             },
-//           ),
-//           IconButton(
-//             icon: const Icon(Icons.refresh),
-//             onPressed: () {
-//               // Action for refresh
-//             },
-//           ),
-//         ],
-//       ),
-//       body: const Center(child: Text('Membership Content')),
-//     );
-//   }
-// }
+class PayPalPaymentPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('PayPal Payment'),
+      ),
+      body: WebViewApp(), //PayPalWebView(), // Using the previously created WebView
+    );
+  }
+}
 
 class MembershipRegistrationPage extends StatefulWidget {
   @override
@@ -114,7 +105,6 @@ class _MembershipRegistrationPageState extends State<MembershipRegistrationPage>
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +177,6 @@ class _MembershipPaymentPageState extends State<MembershipPaymentPage> {
       //     ),
       //   ],
       // ),
-
     );
   }
 
@@ -217,3 +206,4 @@ class _MembershipPaymentPageState extends State<MembershipPaymentPage> {
     }
   }
 }
+

@@ -67,7 +67,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
     }
   }
   @override
-  void didChangeDependencies() {
+  void didChangeDependencies() {// getting FirebaseService through Provider here
     super.didChangeDependencies();
     // Safe to call Provider.of here because context is generically available in didChangeDependencies
     firebaseService = Provider.of<FirebaseService>(context, listen: false);
@@ -326,7 +326,7 @@ class _TextEditorPageState extends State<TextEditorPage> {
           //find icon with subscript as # found
           Stack(
             children: [
-              IconButton(
+              IconButton(//SEARCH
                 icon: const Icon(Icons.search),
                 onPressed: () {
                   setState(() {
@@ -351,9 +351,36 @@ class _TextEditorPageState extends State<TextEditorPage> {
               _pasteFromClipboard(); // at cursor or end if cursor not in field
             },
           ),
-          //_copyToClipboard()-no need now (use generic action)
+          //_copyToClipboard()-Adding back (could use generic action)
+          IconButton(
+            icon: const Icon(Icons.content_copy),
+            onPressed: () {
+              print(">>appbar>>copy clicked");
+              _copyToClipboard();
+            },
+          ),
+
           //_pasteFromClipboard()-no need now (use generic action)
           //.saveTextToFirestore - do more automatically
+
+          IconButton(
+            onPressed: () {
+              print(">>appbar>>save to cloud clicked");
+              String? textContent = _textController.text;
+              if (_textController.text.isNotEmpty) {
+                firebaseService.saveTextToFirestore(_textController.text, _uid);
+              }
+            },
+            icon: const ColorFiltered(
+              colorFilter:
+                  ColorFilter.mode(Colors.transparent, BlendMode.srcATop),
+              // colorFilter: moreThanOneDeviceConnected
+              //     ? ColorFilter.mode(Colors.deepOrangeAccent, BlendMode.srcATop)
+              // : ColorFilter.mode(Colors.transparent, BlendMode.srcATop),
+              child: Icon(Icons.cloud_upload_sharp),
+            ),
+          ),
+
           //todo>> make stack show deviceCount number of add file saving saving change functionality
           // dont need button here to exit app
           if (user != null) //user icon
@@ -365,40 +392,128 @@ class _TextEditorPageState extends State<TextEditorPage> {
       ),
       body: Column(
         children: <Widget>[
+          //============== show Search and Replace Row from AppBar
           Visibility(
             visible: _showSearchReplaceFields,
-            child: Column(
-              children: <Widget>[
-                TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    labelText: 'Find',
-                    border: OutlineInputBorder(),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-                TextField(
-                  controller: _replaceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Replace with',
-                    border: OutlineInputBorder(),
+                IconButton(
+                  onPressed: goToNextInstance,
+                  icon: const Icon(Icons.arrow_downward_outlined),
+                ),
+                IconButton(
+                  onPressed: goToPreviousInstance,
+                  icon: const Icon(Icons.arrow_upward),
+                ),
+                // IconButton(
+                //   onPressed: performReplace,
+                //   icon: const Icon(Icons.find_replace_sharp),
+                // ),
+                Expanded(
+                  child: TextField(
+                    controller: _replaceController,
+                    decoration: const InputDecoration(
+                      hintText: 'Replace',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    ElevatedButton(
-                      onPressed: () => _findText(), // Implement find text functionality
-                      child: const Text('Find'),
+                GestureDetector(
+                  onLongPress: () {
+                    _performReplaceAll();
+                  },
+                  child: Stack(children: [
+                    IconButton(
+                      onPressed: _performReplace,
+                      icon: const Icon(Icons.find_replace_sharp),
                     ),
-                    ElevatedButton(
-                      onPressed: () => _replaceText(), // Implement replace text functionality
-                      child: const Text('Replace'),
-                    ),
-                  ],
+                    if (_foundItemCount > 0)
+                      Positioned(
+                        top: 6.0,
+                        right: 6.0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2.0),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            _foundItemCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (_replacedItemCount > 0)
+                      Positioned(
+                        bottom: 6.0,
+                        right: 6.0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2.0),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            _replacedItemCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ]),
                 ),
               ],
             ),
           ),
+          //______________ main input area ________________
+          // Visibility(
+          //   visible: _showSearchReplaceFields,
+          //   child: Column(
+          //     children: <Widget>[
+          //       TextField(
+          //         controller: _searchController,
+          //         decoration: const InputDecoration(
+          //           labelText: 'Find',
+          //           border: OutlineInputBorder(),
+          //         ),
+          //       ),
+          //       TextField(
+          //         controller: _replaceController,
+          //         decoration: const InputDecoration(
+          //           labelText: 'Replace with',
+          //           border: OutlineInputBorder(),
+          //         ),
+          //       ),
+          //       Row(
+          //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          //         children: <Widget>[
+          //           ElevatedButton(
+          //             onPressed: () => _findText(), // Implement find text functionality
+          //             child: const Text('Find'),
+          //           ),
+          //           ElevatedButton(
+          //             onPressed: () => _replaceText(), // Implement replace text functionality
+          //             child: const Text('Replace'),
+          //           ),
+          //         ],
+          //       ),
+          //     ],
+          //   ),
+          // ),
           Expanded(
             child: TextField(
               controller: _textController,
@@ -434,6 +549,23 @@ class _TextEditorPageState extends State<TextEditorPage> {
     Clipboard.setData(ClipboardData(text: formattedDate));
   }
 
+  void _copyToClipboard() {
+    final textSelection = _textController.selection;
+    String textToCopy;
+
+    // Check if there's a selection
+    if (textSelection.start != textSelection.end) {
+      // Copy the selected text
+      textToCopy = _textController.text
+          .substring(textSelection.start, textSelection.end);
+    } else {
+      // Copy all the text
+      textToCopy = _textController.text;
+    }
+
+    Clipboard.setData(ClipboardData(text: textToCopy));
+  }
+
   Future<void> _pasteFromClipboard() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final String pastedText = data?.text ?? '';
@@ -456,16 +588,14 @@ class _TextEditorPageState extends State<TextEditorPage> {
   } // puts text from firebase to the text box
   @override
   void dispose() {
+    _saveTextLocally();
+    firebaseService.saveTextToFirestore(_textController.text, _uid);
     _textController.dispose();
     _searchController.dispose();
     _replaceController.dispose();
     _textFieldFocusNode.dispose();
-        String textToSave = _textController.text;
     _firebaseSaveTimer
         ?.cancel(); // Cancel the timer when the widget is disposed
-    // saveTextLocally(textToSave);
-    // Save the text to Firebase Firestore
-    firebaseService.saveTextToFirestore(_textController.text, _uid);
     super.dispose();
   }
 }

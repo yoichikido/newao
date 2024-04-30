@@ -15,7 +15,6 @@ import 'package:pin_code_fields/pin_code_fields.dart'; // for phone login
 // import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 //import 'package:flutter_twitter_login/flutter_twitter_login.dart'; //does not support null safety
 
-
 class FirebaseService {
   final FirebaseAuth _auth; // got rid of final and = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();

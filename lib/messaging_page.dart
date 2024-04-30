@@ -22,7 +22,7 @@ class _MessagingPageState extends State<MessagingPage> {
       appBar: AppBar(
         title: Text('Chat Room'),
         actions: [
-          IconButton(
+          IconButton(//PLAY/PAUSE
             icon: Icon(_isMessagesPaused ? Icons.play_arrow : Icons.pause),
             onPressed: () {
               setState(() {
@@ -31,7 +31,7 @@ class _MessagingPageState extends State<MessagingPage> {
               });
             },
           ),
-          IconButton(
+          IconButton(//POP
             icon: Icon(Icons.exit_to_app),
             onPressed: () {
               Navigator.pop(context);
@@ -81,7 +81,7 @@ class _MessagingPageState extends State<MessagingPage> {
                     ),
                   ),
                 ),
-                IconButton(
+                IconButton(//SEND
                   icon: Icon(Icons.send),
                   onPressed: () {
                     if (_messageController.text.isNotEmpty) {

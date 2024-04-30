@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_service.dart';
-import 'main.dart';
 import 'app_shell.dart';
 
 class VerificationCodeScreen extends StatefulWidget {
