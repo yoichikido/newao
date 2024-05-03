@@ -11,7 +11,6 @@ import 'package:flutter/material.dart'; // for phone login
 import 'package:get/get.dart'; // for phone login
 import 'package:pin_code_fields/pin_code_fields.dart'; // for phone login
 // import 'package:twitter_login/twitter_login.dart';
-// import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // store twitter user info if necessary
 // import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 //import 'package:flutter_twitter_login/flutter_twitter_login.dart'; //does not support null safety
 
@@ -39,6 +38,7 @@ class FirebaseService {
 
 // ---=== video methods to here===---
 
+// --===@@@@ athentication stuff below @@@@===--
 //signInWithLastUsedMethod used in MyApp, not in MyStreambuilderApp
   Future<User?> signInWithLastUsedMethod(
       {String? email, String? password}) async {
@@ -71,7 +71,6 @@ class FirebaseService {
         return null;
     }
   }
-
   Future<User?> signInAnonymously() async {
     try {
       UserCredential userCredential =
@@ -83,7 +82,6 @@ class FirebaseService {
       return null;
     }
   }
-
   Future<User?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -105,7 +103,6 @@ class FirebaseService {
       return null;
     }
   }
-
   Future<User?> signInWithApple() async {
     try {
       final appleIdCredential = await SignInWithApple.getAppleIDCredential(
@@ -139,7 +136,6 @@ class FirebaseService {
       return null;
     }
   }
-
   Future<User?> signInWithPhone(
       String phoneNumber, BuildContext context) async {
     User? user;
@@ -184,7 +180,6 @@ class FirebaseService {
     );
     return user;
   }
-
   Future<User?> registerWithEmailAndPassword(
       String email, String password) async {
     try {
@@ -198,7 +193,6 @@ class FirebaseService {
       return null;
     }
   }
-
   Future<User?> signInWithEmailAndPassword(
       String email, String password) async {
     try {
@@ -210,12 +204,13 @@ class FirebaseService {
       return null;
     }
   }
-
   Future<User?> getCurrentUser() async => _auth.currentUser;
   Future<void> signOut() async {
     print('signing out with FirebaseService.signOut');
     await _auth.signOut();
   }
+  // --===@@@@ athentication stuff above @@@@===--
+
 //todo>> add a saveTextToFirestoreByName
 //
   Future<bool> saveTextToFirestore(String textContent, String userId) async {

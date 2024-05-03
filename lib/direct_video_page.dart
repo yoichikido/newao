@@ -266,7 +266,8 @@ class _DirectVideoPageState extends State<DirectVideoPage> {
 
   @override
   Widget build(BuildContext context) {
-    _user = Provider.of<User?>(context);  // must be accessed in a lifecycle method like Build
+    // error if no user below but cannot use User? A value of type 'User?' can't be assigned to a variable of type 'User' because 'User?' is nullable and 'User' isn't.
+    _user = Provider.of<User>(context);  // must be accessed in a lifecycle method like Build
     userId = _user.uid; //~'your_user_id'; // This should be the authenticated user's ID    return Scaffold(
     return Scaffold(
       appBar: AppBar(
